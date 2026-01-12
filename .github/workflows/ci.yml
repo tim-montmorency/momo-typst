@@ -16,5 +16,11 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@v27
 
-      - name: Run repo CI entrypoint
-        run: nix develop -c ./scripts/ci.sh
+      - name: Build PDFs + docs site
+        run: nix develop -c ./scripts/build_pages.sh
+
+      - name: Upload PDFs (docs/)
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-pdfs
+          path: docs/
