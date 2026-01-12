@@ -17,3 +17,6 @@ fi
 
 echo "prepare_repo: updating cache from $sources_file"
 python3 scripts/fetch_github_plan.py --sources-file "$sources_file"
+
+echo "prepare_repo: generating typst entrypoints (for preview)"
+python3 scripts/generate_typ_entrypoints.py --sources-file "$sources_file" --out-dir .

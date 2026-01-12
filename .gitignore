@@ -6,6 +6,10 @@
 # GitHub Pages: le site (docs/) est généré par CI
 docs/
 
+# Fichiers générés (prévisualisation Tinymist): wrappers .typ par cours
+generated/
+cours-*.generated.typ
+
 # Typst cache/output folders (optional)
 .typst/
 

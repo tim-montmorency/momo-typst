@@ -21,6 +21,10 @@
   texte_courriel: [Sélectionnez votre courriel],
   texte_bureau: [Sélectionnez votre bureau],
 
+  // Libellés (singulier/pluriel) — calculés par l'orchestrateur.
+  libelle_courriel: [Courriel :],
+  libelle_bureau: [Bureau :],
+
   // Nouvelle API (préférée): liste de plateformes cochées (ex: ("Teams", "GitHub", "Moodle")).
   // Si none, on retombe sur les booléens (compatibilité).
   plateformes: none,
@@ -160,8 +164,8 @@
     _cell_label([Session :]), _cell_valeur(texte_session),
     _cell_label([Professeure ou professeur :]), _cell_valeur(texte_prof),
     _cell_label([Département de la professeure ou du professeur :]), _cell_valeur(texte_departement_prof),
-    _cell_label([Courriel :]), _cell_valeur(texte_courriel),
-    _cell_label([Bureau :]), _cell_valeur(texte_bureau),
+    _cell_label(libelle_courriel), _cell_valeur(texte_courriel),
+    _cell_label(libelle_bureau), _cell_valeur(texte_bureau),
     _cell_label([Plateforme pédagogique utilisée :]), _cell_valeur(_plateformes),
     _cell_label([Coordination :]), _cell_valeur(coordination_nom),
     _cell_label([Contact de la coordination :]),

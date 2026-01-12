@@ -5,6 +5,9 @@
 //
 // NOTE: En Typst, `@` est spécial; dans du texte markup, écrivez `\@`.
 
+// Département par défaut (utilisé si une personne n'a pas de champ `departement`).
+#let DEPARTEMENT_PROF_DEFAUT = "Techniques d’intégration multimédia"
+
 #let personnes = (
   // Exemples (cas tests) — noms avec accents et caractères spéciaux.
   // NOTE: les IDs doivent être stables et simples (ASCII), les noms peuvent contenir des accents.
@@ -12,6 +15,8 @@
     nom: "Guillaume Arseneault",
     courriel: "guillaume.arseneault@college.example",
     bureau_id: "c-1651",
+    // Optionnel: département de la personne (override du département par défaut).
+    // departement: "Techniques d’intégration multimédia",
   ),
   "thomas-o-fredericks": (
     nom: "Thomas O. Fredericks",

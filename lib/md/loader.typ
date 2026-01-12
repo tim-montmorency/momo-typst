@@ -242,6 +242,29 @@
     ),
   )
 
+  // Auto-plateforme: si le matériel requis mentionne un compte GitHub,
+  // on coche GitHub sur la couverture (plateforme pédagogique utilisée),
+  // sauf si les plateformes ont été définies explicitement via le frontmatter.
+  let github_mentionne_dans_materiel = if sec_materiel == none {
+    false
+  } else {
+    let s = lower(str(sec_materiel)).replace("\u00A0", " ")
+    // Tolère variantes: "Compte GitHub", "compte github", etc.
+    s.contains("github") and (s.contains("compte") or s.contains("compte "))
+  }
+
+  let plateformes_configurees = (
+    params.at("plateformes", default: none) != none or
+    params.at("plateforme_teams", default: none) != none or
+    params.at("plateforme_timdoc", default: none) != none or
+    params.at("plateforme_github", default: none) != none or
+    params.at("plateforme_autre", default: none) != none
+  )
+
+  if github_mentionne_dans_materiel and not plateformes_configurees {
+    params = params + (plateforme_github: true)
+  }
+
   let corps = []
   if a1 != none and str(a1).trim() != "" { corps = corps + _rendre_markdown(a1, base_url: md_base_dir) }
   if sec_contexte != none {

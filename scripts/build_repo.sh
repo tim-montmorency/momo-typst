@@ -18,6 +18,43 @@ compile() {
 # Local markdown example (in-repo)
 compile "cours-582-999-mo.typ"
 
-# Cached GitHub README example
-# (Uses default: cache/582-601/plan.md, but we also pass --input to make it explicit.)
-compile "cours-582-601-mo-github.typ" "--input" "md=cache/582-601/plan.md"
+# Cached GitHub README example (first entry in cache/sources.json, if any)
+if [[ -f "cache/sources.json" ]]; then
+  first_md=$(python3 - <<'PY'
+import json, re
+from pathlib import Path
+
+def derive_semestre(entry_id: str) -> str:
+    digits = re.findall(r"\d", str(entry_id))
+    if len(digits) < 4:
+        raise ValueError(entry_id)
+    return "automne" if (int(digits[3]) % 2 == 1) else "hiver"
+
+def derive_out_dir(entry_id: str, annee):
+    annee_s = str(annee).strip()
+    semestre = derive_semestre(entry_id)
+    safe_id = str(entry_id).strip().lower()
+    safe_id = re.sub(r"[^a-z0-9_-]+", "-", safe_id).strip("-")
+    return f"cache/{annee_s}/{semestre}/{safe_id}"
+
+data = json.loads(Path("cache/sources.json").read_text(encoding="utf-8"))
+entries = data.get("entries") if isinstance(data, dict) and "entries" in data else data
+for e in entries:
+    if not isinstance(e, dict):
+        continue
+    cid = e.get("id")
+    annee = e.get("annee")
+    if cid and annee is not None:
+        out_dir = derive_out_dir(str(cid), annee)
+        print(f"{out_dir}/plan.md")
+        break
+PY
+)
+
+  if [[ -n "$first_md" && -f "$first_md" ]]; then
+    echo "build_repo: typst compile cours-md.typ (md=$first_md)"
+    typst compile --font-path "$font_path" --input "md=$first_md" "cours-md.typ"
+  else
+    echo "build_repo: no cached plan.md found yet (run ./scripts/prepare_repo.sh)"
+  fi
+fi

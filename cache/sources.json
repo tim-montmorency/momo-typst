@@ -1,8 +1,7 @@
 [
   {
-    "id": "582-601",
-    "numero_cours": "582 601 MO",
-    "readme_url": "https://raw.githubusercontent.com/tim-montmorency/582-601-MO-PLAN_DE_COURS/refs/heads/main/README.md",
-    "out_dir": "cache/582-601"
+    "id": "582-601-mo",
+    "annee": 2026,
+    "readme_url": "https://raw.githubusercontent.com/tim-montmorency/582-601-MO-PLAN_DE_COURS/refs/heads/main/README.md"
   }
 ]

@@ -13,6 +13,52 @@ from pathlib import Path
 IMAGE_LINK_RE = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
 
 
+def derive_numero_cours(entry_id: str) -> str:
+    """Derive Typst `numero_cours` from an entry id.
+
+    Accepted forms:
+      - 582-601
+      - 582-601-mo
+      - 582-601-MO
+
+    By default, assumes the program suffix is MO when missing.
+    """
+
+    s = str(entry_id).strip()
+    m = re.match(r"^(?P<a>\d{3})[- _]?(?P<b>\d{3})(?:[- _]?(?P<suffix>[A-Za-z]{2}))?$", s)
+    if not m:
+        raise ValueError(f"invalid id format: {entry_id!r} (expected 582-601 or 582-601-mo)")
+
+    a = m.group("a")
+    b = m.group("b")
+    suffix = (m.group("suffix") or "MO").upper()
+    return f"{a} {b} {suffix}"
+
+
+def derive_semestre(entry_id: str) -> str:
+    """Derive semestre from the 4th digit of the numeric course id.
+
+    Spec: 4th digit odd => automne, even => hiver.
+    Uses the concatenation of the first 6 digits found in the id.
+    """
+
+    digits = re.findall(r"\d", str(entry_id))
+    if len(digits) < 4:
+        raise ValueError(f"cannot derive semestre from id: {entry_id!r}")
+    fourth = int(digits[3])
+    return "automne" if (fourth % 2 == 1) else "hiver"
+
+
+def derive_out_dir(entry_id: str, annee: int | str | None) -> str:
+    if annee is None or str(annee).strip() == "":
+        raise ValueError(f"missing 'annee' for id: {entry_id!r}")
+    annee_s = str(annee).strip()
+    semestre = derive_semestre(entry_id)
+    safe_id = str(entry_id).strip().lower()
+    safe_id = re.sub(r"[^a-z0-9_-]+", "-", safe_id).strip("-")
+    return f"cache/{annee_s}/{semestre}/{safe_id}"
+
+
 def _slice_section(lines: list[str], start_idx: int, stop_prefixes: tuple[str, ...]) -> list[str]:
     out: list[str] = []
     i = start_idx
@@ -288,9 +334,32 @@ def main() -> int:
             out_dir = entry.get("out_dir")
             entry_id = entry.get("id")
             numero_cours = entry.get("numero_cours")
+            annee = entry.get("annee")
 
-            if not readme_url or not out_dir:
-                print(f"Skipping entry #{idx}{' (' + entry_id + ')' if entry_id else ''}: missing readme_url/out_dir", file=sys.stderr)
+            if not readme_url:
+                print(
+                    f"Skipping entry #{idx}{' (' + str(entry_id) + ')' if entry_id else ''}: missing readme_url",
+                    file=sys.stderr,
+                )
+                rc = 2
+                continue
+
+            if not entry_id:
+                print(f"Skipping entry #{idx}: missing id", file=sys.stderr)
+                rc = 2
+                continue
+
+            # Nouveau format: out_dir et numero_cours sont dérivés.
+            try:
+                if not out_dir:
+                    out_dir = derive_out_dir(str(entry_id), annee)
+                if not numero_cours:
+                    numero_cours = derive_numero_cours(str(entry_id))
+            except Exception as e:
+                print(
+                    f"Skipping entry #{idx}{' (' + str(entry_id) + ')' if entry_id else ''}: {e}",
+                    file=sys.stderr,
+                )
                 rc = 2
                 continue
 

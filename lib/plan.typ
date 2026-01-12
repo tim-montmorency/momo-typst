@@ -1,7 +1,7 @@
 // lib/plan.typ — orchestrateur du gabarit public `plan_de_cours`
 
 #import "utils.typ": _joindre, _lignes
-#import "data.typ": _exiger_cours, _exiger_personne, _exiger_bureau
+#import "data.typ": _exiger_cours, _exiger_personne, _exiger_bureau, DEPARTEMENT_PROF_DEFAUT
 #import "pages/couverture.typ": page_couverture_plan_de_cours
 #import "pages/presentation.typ": page_presentation_du_cours
 #import "typography.typ": FONT_CORPS, FONT_TITRES, INTERLETTRE_DEFAUT, TAILLE_CORPS, INTERLIGNE_CORPS, POIDS_TITRES
@@ -74,13 +74,27 @@
     _lignes(noms_profs)
   }
 
-  let departement_prof_effectif = if departement_prof != none { departement_prof } else { programme }
+  let departement_prof_effectif = if departement_prof != none {
+    // Override explicite (ex: frontmatter YAML `departement_prof`)
+    departement_prof
+  } else if profs.len() > 0 {
+    // Valeur dérivée du botin: chaque prof peut définir `departement`.
+    let deps = profs
+      .map(p => p.at("departement", default: none))
+      .map(d => if d != none { d } else { DEPARTEMENT_PROF_DEFAUT })
+      .dedup()
+    if deps.len() == 1 { deps.at(0) } else { _lignes(deps) }
+  } else {
+    // Fallback historique si aucun prof n'est connu.
+    programme
+  }
+
+  let courriels_profs = profs.map(p => p.at("courriel", default: none)).filter(x => x != none)
 
   let courriel_effectif = if courriel != none {
     courriel
   } else {
-    let courriels = profs.map(p => p.at("courriel", default: none)).filter(x => x != none)
-    if courriels.len() == 0 { none } else { _lignes(courriels) }
+    if courriels_profs.len() == 0 { none } else { _lignes(courriels_profs) }
   }
 
   let bureaux_codes = if bureau != none {
@@ -94,6 +108,22 @@
 
     let tous = (codes + codes_directs).dedup()
     if tous.len() == 0 { none } else { tous }
+  }
+
+  let libelle_courriel_couverture = if courriel != none {
+    [Courriel :]
+  } else if courriels_profs.len() > 1 {
+    [Courriels :]
+  } else {
+    [Courriel :]
+  }
+
+  let libelle_bureau_couverture = if bureau != none {
+    [Bureau :]
+  } else if bureaux_codes != none and bureaux_codes.len() > 1 {
+    [Bureaux :]
+  } else {
+    [Bureau :]
   }
 
   // Couverture: valeur seulement (sans libellé)
@@ -145,6 +175,8 @@
     texte_departement_prof: departement_prof_effectif,
     texte_courriel: if courriel_effectif != none { courriel_effectif } else { [Sélectionnez votre courriel] },
     texte_bureau: if bureau_couverture != none { bureau_couverture } else { [Sélectionnez votre bureau] },
+    libelle_courriel: libelle_courriel_couverture,
+    libelle_bureau: libelle_bureau_couverture,
 
     plateformes: plateformes,
     plateforme_teams: plateforme_teams,

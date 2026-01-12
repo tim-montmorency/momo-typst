@@ -48,9 +48,12 @@ Compilez avec:
 Ces scripts sont utilisés localement et en CI (rien de spécifique à GitHub dans la logique):
 
 - Préparer le dépôt (télécharger/mettre à jour le cache): `./scripts/prepare_repo.sh`
+- Nettoyer les entrypoints générés (prévisualisation): `./scripts/clean_generated.sh`
 - Compiler des PDFs de référence: `./scripts/build_repo.sh`
 - Pipeline complet (prepare + build): `./scripts/ci.sh`
 - Générer un site GitHub Pages (HTML + PDFs): `./scripts/build_pages.sh`
+
+Note: `./scripts/prepare_repo.sh` génère aussi des fichiers `.typ` (non versionnés) afin de pouvoir prévisualiser chaque cours directement dans VS Code (Tinymist) sans passer par `--input`.
 
 ### Nix (environnement reproductible)
 
@@ -110,6 +113,23 @@ Exemple de wrapper minimal:
 
 Note: si vous utilisez cet exemple, créez votre propre `cours-md.typ` à la racine du dépôt.
 
+#### Option recommandée (preview): entrypoints `.typ` générés
+
+Après `./scripts/prepare_repo.sh`, un fichier par cours est généré à la racine, ex:
+
+- `cours-2026-hiver-582-601-mo.generated.typ`
+
+Vous pouvez ouvrir ce fichier dans VS Code et utiliser la prévisualisation Tinymist.
+
+Ces fichiers sont générés automatiquement à partir de `cache/sources.json` et sont ignorés par Git.
+
+Pour repartir de zéro (côté “root”), vous pouvez faire:
+
+```sh
+./scripts/clean_generated.sh
+./scripts/prepare_repo.sh
+```
+
 #### Option: plan de cours hébergé dans un README GitHub
 
 Typst (dans ce repo) ne télécharge pas directement du contenu HTTP(S) pendant la compilation.
@@ -129,10 +149,60 @@ Pour automatiser le caching de plusieurs cours, ajoutez les URLs dans `cache/sou
 python3 scripts/fetch_github_plan.py --sources-file cache/sources.json
 ```
 
+##### Comment les profs ajoutent leur plan (recommandé)
+
+Chaque prof héberge son plan de cours en **Markdown** dans son propre dépôt (généralement un `README.md`).
+Ensuite, il suffit d’ajouter une entrée dans `cache/sources.json`.
+
+Champs à remplir (et seulement ceux-là):
+
+- `id`: identifiant du cours, ex: `582-601-mo`
+- `annee`: année de référence (ex: `2026`)
+- `readme_url`: URL raw du README, ex: `https://raw.githubusercontent.com/<org>/<repo>/refs/heads/<branch>/README.md`
+
+##### Format de `id` (corrélation)
+
+L’`id` est l’identifiant unique d’un cours dans ce dépôt. Il sert à dériver:
+
+- le semestre (`automne` / `hiver`),
+- l’emplacement du cache (où `plan.md` est écrit),
+- le nom et le chemin du PDF généré pour Pages.
+
+Formats acceptés:
+
+- `582-601` (suffixe implicite)
+- `582-601-mo` (suffixe explicite)
+
+Exemple pour `id = 582-601-mo`, `annee = 2026`:
+
+- Cache: `cache/2026/hiver/582-601-mo/plan.md`
+- PDF Pages: `docs/2026/hiver/582-601-mo.pdf`
+
+Le reste est **généré automatiquement**:
+
+- `out_dir` (dossier de cache) est dérivé de `annee` + semestre + `id`
+- `numero_cours` (frontmatter) est dérivé de `id` (par défaut suffixe `MO` si absent)
+
+##### Semestre (automne / hiver)
+
+Le semestre est dérivé automatiquement à partir de l’`id` du cours:
+
+- On prend le **4e chiffre** de l’identifiant numérique du cours.
+- S’il est **impair** → `automne`
+- S’il est **pair** → `hiver`
+
+Exemple: `582-601` → chiffres `582601` → 4e chiffre = `6` (pair) → `hiver`.
+
+##### Structure du cache
+
+Le cache est rangé ainsi:
+
+- `cache/<annee>/<automne|hiver>/<id>/plan.md`
+
 Notes:
 
-- Le script génère `cache/<cours>/plan.md` (un wrapper Markdown avec frontmatter YAML, ex: `numero_cours`).
-- Il génère aussi `cache/<cours>/cours_data.snippet.typ` pour copier/coller les champs de page 2 dans `data/cours.typ`.
+- Le script génère `cache/<annee>/<automne|hiver>/<id>/plan.md` (un wrapper Markdown avec frontmatter YAML, ex: `numero_cours`).
+- Il génère aussi `cache/<annee>/<automne|hiver>/<id>/cours_data.snippet.typ` pour copier/coller les champs de page 2 dans `data/cours.typ`.
 
 Un exemple prêt à compiler est fourni dans `cours-582-601-mo-github.typ` (utilise `--input md=...`).
 
@@ -176,6 +246,9 @@ Votre contenu…
 
 Modifiez `data/botin.typ` et ajoutez une entrée par personne.
 Ensuite, utilisez `id_prof` dans vos documents.
+
+Le botin supporte aussi un champ optionnel `departement` (département de la professeure ou du professeur).
+S’il n’est pas fourni, la valeur par défaut est `Techniques d’intégration multimédia`.
 
 Pour plusieurs profs dans un même plan de cours, utilisez `ids_profs`:
 

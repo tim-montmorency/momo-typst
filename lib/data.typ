@@ -1,7 +1,7 @@
 // lib/data.typ — accès aux sources de vérité (data/*.typ)
 
 #import "../data/cours.typ": cours
-#import "../data/botin.typ": personnes
+#import "../data/botin.typ": personnes, DEPARTEMENT_PROF_DEFAUT
 #import "../data/bureaux.typ": bureaux
 
 #let _normaliser_nom_personne(s) = {
