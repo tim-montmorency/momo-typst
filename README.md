@@ -94,7 +94,7 @@ Le flux recommandé passe par `cache/sources.json`:
 
 - `typst compile --font-path fonts cours-2026-hiver-582-601-mo.generated.typ`
 
-Le logo par défaut est `cm_logo.png` à la racine. Remplacez le fichier si nécessaire.
+Le logo par défaut est `assets/cm_logo.png`. Remplacez le fichier si nécessaire.
 
 ### Prévisualiser un cours (VS Code)
 

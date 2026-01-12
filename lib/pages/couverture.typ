@@ -6,7 +6,7 @@
 #import "../typography.typ": FONT_CORPS, FONT_TITRES, INTERLETTRE_DEFAUT, TAILLE_CORPS, INTERLIGNE_CORPS, POIDS_TITRES
 
 #let page_couverture_plan_de_cours(
-  // Chemin d'image optionnel pour le logo (ex: "cm_logo.png").
+  // Chemin d'image optionnel pour le logo (ex: "assets/cm_logo.png").
   logo: none,
   titre_droite: [PLAN DE COURS],
   instruction: [Sélectionnez \# du cours et appuyez sur TAB],

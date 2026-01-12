@@ -3,7 +3,7 @@
 // Contexte: plusieurs modules vivent dans lib/* (ex: lib/md, lib/pages).
 // Les appels `read(...)` / `image(...)` résolvent les chemins relativement au fichier
 // qui exécute l'appel. Comme ces modules ne sont pas à la racine, on normalise
-// les chemins "simples" (ex: "cm_logo.png") vers "../../cm_logo.png".
+// les chemins "simples" (ex: "assets/cm_logo.png") vers "../../assets/cm_logo.png".
 
 #let _est_chemin_deja_relatif_ou_absolu(s) = {
   s.starts-with("/") or s.starts-with("./") or s.starts-with("../")

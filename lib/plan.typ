@@ -8,7 +8,7 @@
 
 #let plan_de_cours(
   // Page couverture
-  logo: "cm_logo.png",
+  logo: "assets/cm_logo.png",
 
   // Single source of truth key
   numero_cours: none,
