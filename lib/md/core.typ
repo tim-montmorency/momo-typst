@@ -47,9 +47,9 @@
     let start = idx
     let end = start + 1
     while end < lines.len() {
-      let t = lines.at(end).trim()
-      // Fin de section au prochain heading (#, ##, ###...)
-      if t.starts-with("#") { break }
+      let n = _niveau_heading(lines.at(end))
+      // Fin de section au prochain heading de niveau <= 2
+      if n != none and n <= 2 { break }
       end += 1
     }
     let before = lines.slice(0, start).join("\n")
@@ -104,13 +104,13 @@
   (md, none, "", none)
 }
 
-#let _rendre_markdown(md) = {
+#let _rendre_markdown(md, base_url: none) = {
   let (_, corps) = cmarker.render-with-metadata(
     md,
     // Pas de métadonnées sur les fragments.
     metadata-block: none,
     scope: (image: (source, alt: none, format: auto) => {
-      image(_resoudre_source_asset(source), alt: alt, format: format)
+      image(_resoudre_source_asset(source, base_url: base_url), alt: alt, format: format)
     }),
   )
   corps

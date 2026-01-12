@@ -3,6 +3,7 @@
 #import "../utils.typ": _case_a_cocher, _colonnes_fr
 
 #import "../paths.typ": _resoudre_source_asset
+#import "../typography.typ": FONT_CORPS, FONT_TITRES, INTERLETTRE_DEFAUT, TAILLE_CORPS, INTERLIGNE_CORPS, POIDS_TITRES
 
 #let page_couverture_plan_de_cours(
   // Chemin d'image optionnel pour le logo (ex: "cm_logo.png").
@@ -40,8 +41,8 @@
     margin: (x: 2.2cm, y: 2.2cm),
     footer: context { align(right)[#counter(page).display("1")] },
   )
-  set text(11pt)
-  set par(leading: 1.2em)
+  set text(font: FONT_CORPS, tracking: INTERLETTRE_DEFAUT, TAILLE_CORPS)
+  set par(leading: INTERLIGNE_CORPS)
 
   // Header row: logo (left) + title (right)
   let logo_effectif = if logo == none {
@@ -55,14 +56,16 @@
     gutter: 0pt,
     if logo_effectif != none { image(logo_effectif, height: 1.6cm) } else { [] },
     block({
-      set text(18pt, weight: "bold")
+      set par(leading: 1em)
+      set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 18pt, weight: POIDS_TITRES)
       titre_droite
     }),
   )
 
   v(1.2cm)
   align(center, block({
-    set text(22pt, weight: "bold")
+    set par(leading: 1em)
+    set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 22pt, weight: POIDS_TITRES)
     instruction
   }))
   v(0.5cm)
@@ -81,12 +84,14 @@
       label
     }),
   )
-  // La barre centrale est le bord gauche de la colonne de droite.
   // Important: on rend `value` directement (pas dans `block(...)`) pour éviter
   // un espacement supplémentaire quand `value` contient des retours de ligne.
-  let _cell_valeur(value) = box(
-    stroke: (left: 1pt),
-    inset: (left: 0.9em, top: 0.3em, bottom: 0.3em),
+  // NOTE: la ligne verticale est gérée par `table(stroke: ...)` pour rester
+  // continue, même si un libellé s'étend sur plusieurs lignes.
+  let _cell_valeur(value) = pad(
+    left: 0.9em,
+    top: 0.3em,
+    bottom: 0.3em,
   )[ #value ]
 
   let _plateformes = block({
@@ -140,10 +145,13 @@
 
   // Table 40/60, pleine largeur, avec séparateur vertical unique.
   block(width: 100%)[#table(
-    columns: (0.4fr, 0.6fr),
+    // Colonne de gauche auto: évite que les libellés (ex: Département...) cassent.
+    // Colonne de droite: prend le reste.
+    columns: (auto, 1fr),
     align: (right, left),
     inset: 0pt,
-    stroke: none,
+    // Une seule ligne verticale entre les colonnes, sans bordures externes.
+    stroke: (x: 1pt, y: none, top: none, bottom: none, left: none, right: none),
 
     _cell_label([Nombre d’heures d’enseignement :]), _cell_valeur(texte_heures),
     _cell_label([Pondération :]), _cell_valeur(texte_ponderation),

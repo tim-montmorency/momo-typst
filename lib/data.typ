@@ -4,6 +4,48 @@
 #import "../data/botin.typ": personnes
 #import "../data/bureaux.typ": bureaux
 
+#let _normaliser_nom_personne(s) = {
+  // Normalisation simple pour matcher des noms provenant du Markdown.
+  // - minuscules
+  // - supprime ponctuation courante (.,’,' )
+  // - remplace tirets par espaces
+  // - compacte les espaces
+  let x = lower(str(s))
+  x = x.replace("\u00A0", " ")
+  x = x.replace(".", "")
+  x = x.replace("’", "")
+  x = x.replace("'", "")
+  x = x.replace("‑", " ")
+  x = x.replace("-", " ")
+  x = x.replace("  ", " ")
+  x = x.replace("  ", " ")
+  x.trim()
+}
+
+#let id_personne_par_nom(nom) = {
+  let cible = _normaliser_nom_personne(nom)
+  for id in personnes.keys() {
+    let p = personnes.at(id)
+    let n = p.at("nom", default: none)
+    if n != none and _normaliser_nom_personne(n) == cible {
+      return id
+    }
+  }
+  none
+}
+
+#let ids_personnes_par_noms(noms) = {
+  // Retourne seulement les IDs trouvés, dans le même ordre.
+  let ids = ()
+  for nom in noms {
+    let id = id_personne_par_nom(nom)
+    if id != none {
+      ids = ids + (id,)
+    }
+  }
+  if ids == () { none } else { ids }
+}
+
 #let cours_par_numero(numero_cours) = {
   cours.at(numero_cours, default: none)
 }

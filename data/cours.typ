@@ -85,6 +85,27 @@
     unites: [7 2/3],
     prealables: [PA : 582 501 MO, 582 521 MO],
     session: 6,
+
+    // --- Page 2: PRÉSENTATION DU COURS ---
+    description_du_cours: "Ce cours vise la réalisation d’un projet multimédia en équipe tel  qu’une installation interactive ou une expérience de réalité mixte.\nL’élève collabore à l’élaboration d’un projet multimédia interactif,  et ce, de la conception jusqu’à la présentation du produit.\nIl a  l’occasion de mettre en pratique toutes les compétences acquises  au cours de sa formation technique.",
+    objectif_integrateur: "Réaliser une expérience multimédia interactive.",
+    competences_ministerielles: (
+      "015U Réaliser un produit multimédia sur support (éléments 1 à 11).",
+    ),
+    objectifs_apprentissage: (
+      "Planifier la réalisation de l’expérience multimédia.",
+      "Programmer l’expérience multimédia.",
+      "Contrôler la qualité de l’expérience multimédia.",
+      "Présenter l’expérience multimédia.",
+    ),
+    cours_lies: (
+      prealables_absolus: (
+        "582 501 MO Conception d’une expérience multimédia",
+        "582 521 MO Installation multimédia",
+      ),
+      prealables_relatifs: (),
+      corequis: (),
+    ),
   ),
   "582 611 MO": (
     numero: "582 611 MO",

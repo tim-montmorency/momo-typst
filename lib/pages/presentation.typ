@@ -1,9 +1,12 @@
 // lib/pages/presentation.typ — page 2: Présentation du cours
 
 #import "../utils.typ": _texte_paragraphes, _liste_lignes, _colonnes_fr
+#import "../typography.typ": INTERLIGNE_CORPS
 
 #let page_presentation_du_cours(meta_cours) = {
-  set par(justify: true, leading: 1.25em)
+  // Corps: Geist Regular, interlignage 120% (hérité du gabarit) — on garde
+  // la même valeur ici pour les blocs spécifiques de la page 2.
+  set par(justify: true, leading: INTERLIGNE_CORPS)
 
   let description = if meta_cours != none { meta_cours.at("description_du_cours", default: none) } else { none }
   let objectif = if meta_cours != none { meta_cours.at("objectif_integrateur", default: none) } else { none }
@@ -11,9 +14,29 @@
   let objectifs = if meta_cours != none { meta_cours.at("objectifs_apprentissage", default: none) } else { none }
   let cours_lies = if meta_cours != none { meta_cours.at("cours_lies", default: none) } else { none }
 
-  let prealables_abs = if cours_lies != none { cours_lies.at("prealables_absolus", default: none) } else { none }
+  let prealables_abs = if cours_lies != none {
+    cours_lies.at("prealables_absolus", default: none)
+  } else if meta_cours != none {
+    let v = meta_cours.at("prealables", default: none)
+    if v == none { none }
+    else if type(v) == "array" { v }
+    else { (v,) }
+  } else {
+    none
+  }
+
   let prealables_rel = if cours_lies != none { cours_lies.at("prealables_relatifs", default: none) } else { none }
-  let corequis = if cours_lies != none { cours_lies.at("corequis", default: none) } else { none }
+
+  let corequis = if cours_lies != none {
+    cours_lies.at("corequis", default: none)
+  } else if meta_cours != none {
+    let v = meta_cours.at("corequis", default: none)
+    if v == none { none }
+    else if type(v) == "array" { v }
+    else { (v,) }
+  } else {
+    none
+  }
 
   // Headings (indexés dans l'outline)
   [
@@ -50,7 +73,7 @@
     <objectifs-dapprentissage>
   ]
   if objectifs != none {
-    let xs = if type(objectifs) == "array" { objectifs } else { objectifs }
+    let xs = if type(objectifs) == array { objectifs } else { objectifs }
     enum(
       numbering: "1.",
       indent: 1.2em,

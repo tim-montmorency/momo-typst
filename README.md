@@ -14,24 +14,64 @@ L’objectif: garder une mise en page uniforme (marges, titres, en-tête, pagina
 
 ## Prérequis
 
-Installer Typst
+### Recommandé: installer via Nix
+
+Le dépôt inclut un environnement Nix épinglé (Typst + Python) pour que tout le monde compile avec les mêmes versions.
+
+1) Installez Nix
+
+- macOS / Linux (recommandé): utilisez l’installateur Determinate Systems (simple et fiable)
+  - https://determinate.systems/nix/
+
+2) Entrez dans l’environnement du dépôt (inclut `typst`)
+
+- `nix develop`
+
+Ensuite, `typst` est disponible dans votre shell.
+
+### Alternative (si vous ne voulez pas Nix)
+
+Installer Typst manuellement, puis assurez-vous d’avoir aussi `python3` pour le script de cache.
+
+Pour assurer une typographie identique sur toutes les machines, le dépôt inclut les polices dans `fonts/`.
+Compilez avec:
+
+- `typst compile --font-path fonts <fichier>.typ`
+- `typst watch --font-path fonts <fichier>.typ`
 
 
 
 ## Utilisation
 
-### Compiler l’exemple de syllabus
+### Entrypoints (scripts du dépôt)
+
+Ces scripts sont utilisés localement et en CI (rien de spécifique à GitHub dans la logique):
+
+- Préparer le dépôt (télécharger/mettre à jour le cache): `./scripts/prepare_repo.sh`
+- Compiler des PDFs de référence: `./scripts/build_repo.sh`
+- Pipeline complet (prepare + build): `./scripts/ci.sh`
+- Générer un site GitHub Pages (HTML + PDFs): `./scripts/build_pages.sh`
+
+### Nix (environnement reproductible)
+
+Si vous utilisez Nix, vous pouvez exécuter la CI locale dans un environnement épinglé:
+
+- `nix develop -c ./scripts/ci.sh`
+
+### Compiler l’exemple (cours-582-999)
 
 Depuis la racine du dépôt:
 
-- Compilation PDF: `typst compile syllabus.typ`
-- Mode watch: `typst watch syllabus.typ`
+- Compilation PDF: `typst compile --font-path fonts cours-582-999-mo.typ`
+- Mode watch: `typst watch --font-path fonts cours-582-999-mo.typ`
 
 Le logo par défaut est `cm_logo.png` à la racine. Remplacez le fichier si nécessaire.
 
 ### Prévisualiser un cours (VS Code)
 
 Ouvrez un fichier `cours-*.typ` (ex: `cours-582-501-mo.typ`).
+
+La prévisualisation (Tinymist) est configurée pour utiliser les polices du dépôt via `.vscode/settings.json` (font paths + désactivation des polices système pour un rendu reproductible).
 
 - `numero_cours` alimente automatiquement la page couverture à partir de `data/cours.typ`
 - `id_prof` alimente `prof / courriel / bureau` à partir de `data/botin.typ` (et les bureaux partagés via `data/bureaux.typ`)
@@ -66,40 +106,35 @@ Exemple de wrapper minimal:
 ```
 
 - Exemple:
-  - `typst compile --input md=cours-582-611-mo.md cours-md.typ cours-582-611-mo.pdf`
+  - `typst compile --font-path fonts --input md=cours-582-611-mo.md cours-md.typ cours-582-611-mo.pdf`
 
 Note: si vous utilisez cet exemple, créez votre propre `cours-md.typ` à la racine du dépôt.
 
-### Évaluations sommatives (tableau)
+#### Option: plan de cours hébergé dans un README GitHub
 
-Le gabarit transforme automatiquement la sous-section Markdown `### Évaluations sommatives` (dans la section `## Évaluation des apprentissages`) en tableau (comme sur la capture d’écran), à partir d’une structure en listes.
+Typst (dans ce repo) ne télécharge pas directement du contenu HTTP(S) pendant la compilation.
+Le workflow recommandé est donc:
 
-Format attendu:
+```sh
+python3 scripts/fetch_github_plan.py \
+  "https://raw.githubusercontent.com/<org>/<repo>/refs/heads/<branch>/README.md" \
+  cache/mon-cours
 
-```markdown
-### Évaluations sommatives
+typst compile --font-path fonts cours-md.typ --input md=cache/mon-cours/plan.md
+```
 
-#### Nom de l’évaluation
+Pour automatiser le caching de plusieurs cours, ajoutez les URLs dans `cache/sources.json` puis exécutez:
 
-- Description
-  - Texte libre (1+ lignes)
-- Type
-  - Individuel
-  - Équipe
-- Critères
-  - Critère 1
-  - Critère 2
-- Échéance
-  - Séance 3
-- Pondération
-  - 20 %
+```sh
+python3 scripts/fetch_github_plan.py --sources-file cache/sources.json
 ```
 
 Notes:
 
-- Les blocs `#### ...` deviennent des lignes du tableau.
-- `Type` coche automatiquement `Individuel` / `Équipe` selon les valeurs présentes.
-- Le tableau répète son en-tête si il se poursuit sur une page suivante et une évaluation n’est pas coupée entre deux pages.
+- Le script génère `cache/<cours>/plan.md` (un wrapper Markdown avec frontmatter YAML, ex: `numero_cours`).
+- Il génère aussi `cache/<cours>/cours_data.snippet.typ` pour copier/coller les champs de page 2 dans `data/cours.typ`.
+
+Un exemple prêt à compiler est fourni dans `cours-582-601-mo-github.typ` (utilise `--input md=...`).
 
 ### Plateformes pédagogiques
 

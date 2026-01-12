@@ -91,7 +91,7 @@
 
 #let _texte_paragraphes(x) = {
   if x == none { none }
-  else if type(x) == "content" { x }
+  else if type(x) == content { x }
   else {
     let s = str(x)
     let parts = s.split("\n\n").map(p => p.trim()).filter(p => p != "")
@@ -111,8 +111,32 @@
 #let _liste_lignes(items) = {
   if items == none { none }
   else {
-    let xs = if type(items) == "array" { items } else { items }
-    let ys = xs.map(x => if x == none { none } else { str(x) }).filter(x => x != none and x != "")
-    if ys.len() == 0 { none } else { stack(spacing: 0.25em, ..ys) }
+    let _emit(x, out, first) = {
+      if x == none {
+        (out, first)
+      } else if type(x) == array {
+        let o = out
+        let f = first
+        for y in x {
+          let (o2, f2) = _emit(y, o, f)
+          o = o2
+          f = f2
+        }
+        (o, f)
+      } else if type(x) == content {
+        let o = if first { out + x } else { out + v(0.25em) + x }
+        (o, false)
+      } else {
+        let s = str(x)
+        if s == "" { (out, first) }
+        else {
+          let o = if first { out + s } else { out + v(0.25em) + s }
+          (o, false)
+        }
+      }
+    }
+
+    let (out, first) = _emit(items, [], true)
+    if first { none } else { out }
   }
 }

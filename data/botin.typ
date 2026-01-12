@@ -8,7 +8,16 @@
 #let personnes = (
   // Exemples (cas tests) — noms avec accents et caractères spéciaux.
   // NOTE: les IDs doivent être stables et simples (ASCII), les noms peuvent contenir des accents.
-
+  "guillaume-arseneault": (
+    nom: "Guillaume Arseneault",
+    courriel: "guillaume.arseneault@college.example",
+    bureau_id: "c-1651",
+  ),
+  "thomas-o-fredericks": (
+    nom: "Thomas O. Fredericks",
+    courriel: "thomas.ofredericks@college.example",
+    bureau_id: "c-1651",
+  ),
   // Deux profs partagent le même bureau (ne doit s’afficher qu’une seule fois).
   "marie-soleil-bouchard": (
     nom: "Marie-Soleil Bouchard",

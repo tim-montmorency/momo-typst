@@ -3,5 +3,12 @@
 *.log
 *.aux
 
+# GitHub Pages: on veut versionner les PDFs dans docs/
+!docs/*.pdf
+
 # Typst cache/output folders (optional)
 .typst/
+
+# Downloaded GitHub README caches (keep sources list tracked)
+cache/**
+!cache/sources.json

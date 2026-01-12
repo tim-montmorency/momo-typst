@@ -4,6 +4,7 @@
 #import "data.typ": _exiger_cours, _exiger_personne, _exiger_bureau
 #import "pages/couverture.typ": page_couverture_plan_de_cours
 #import "pages/presentation.typ": page_presentation_du_cours
+#import "typography.typ": FONT_CORPS, FONT_TITRES, INTERLETTRE_DEFAUT, TAILLE_CORPS, INTERLIGNE_CORPS, POIDS_TITRES
 
 #let plan_de_cours(
   // Page couverture
@@ -38,6 +39,10 @@
   plateforme_timdoc: false,
   plateforme_github: false,
   plateforme_autre: false,
+
+  // Optionnel: désactiver la page 2 auto (utile si le Markdown contient déjà
+  // une section "Présentation du cours").
+  inclure_presentation_du_cours: true,
 
   // Content
   body,
@@ -159,15 +164,19 @@
     numbering: "1",
     footer: context { align(right)[#counter(page).display("1")] },
   )
-  set text(11pt)
-  set par(justify: true, leading: 1.25em)
+  // Typographie (normes graphiques):
+  // - Corps: Geist Regular, interlignage 120%, inter-lettrage 0
+  // - Titres/sous-titres: Inter Tight SemiBold, inter-lettrage 0
+  set text(font: FONT_CORPS, tracking: INTERLETTRE_DEFAUT, TAILLE_CORPS)
+  set par(justify: true, leading: INTERLIGNE_CORPS)
   set heading(numbering: none)
 
   // Heading spécial pour le « bloc titre » (numérotation désactivée).
   // On le garde comme `heading` pour qu'il soit cliquable dans l'outline PDF.
   show heading.where(level: 1, numbering: none): it => block({
     align(center, block({
-      set text(22pt, weight: "bold")
+      set par(leading: 1em)
+      set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 22pt, weight: POIDS_TITRES)
       it
     }))
     v(0.8em)
@@ -185,25 +194,28 @@
     <cours>
   ])
 
-  // Page 2: Présentation du cours (données dans data/cours.typ)
-  page_presentation_du_cours(meta_cours)
-  pagebreak()
-
   // Grille stylistique: après décalage, les sections principales sont level 2
   // et les sous-sections level 3.
+  // NOTE: doit être défini avant la page 2 pour qu'elle ait le même style.
   show heading.where(level: 2): it => block({
-    set text(16pt, weight: "semibold")
-    upper(it.body)
-    v(0.4em)
-    line(length: 100%)
+    set par(leading: 1em)
+    set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 16pt, weight: POIDS_TITRES)
+    it.body
     v(0.8em)
   })
 
   show heading.where(level: 3): it => block({
-    set text(13pt, weight: "semibold")
-    upper(it.body)
-    v(0.3em)
+    set par(leading: 1.1em)
+    set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 13pt, weight: POIDS_TITRES)
+    it.body
+    v(0.5em)
   })
+
+  // Page 2: Présentation du cours (données dans data/cours.typ)
+  if inclure_presentation_du_cours {
+    page_presentation_du_cours(meta_cours)
+    pagebreak()
+  }
 
   // Body
   body
