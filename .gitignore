@@ -1,0 +1,7 @@
+.DS_Store
+*.pdf
+*.log
+*.aux
+
+# Typst cache/output folders (optional)
+.typst/
