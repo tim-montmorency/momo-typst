@@ -43,6 +43,17 @@ Compilez avec:
 
 ## Utilisation
 
+### Commandes rapides (quoi exécuter?)
+
+- Mettre à jour le cache + générer les entrypoints de preview: `./scripts/prepare_repo.sh`
+- Nettoyer les artefacts générés/ignorés (PDF, docs, cache téléchargé): `git clean -fdX`
+- Nettoyer uniquement les entrypoints `.generated.typ`: `./scripts/clean_generated.sh`
+- Smoke test (compile ce qui existe à la racine + cours en cache): `./scripts/test_all.sh`
+- Compiler quelques PDFs de référence: `./scripts/build_repo.sh`
+- Générer le site Pages (HTML + PDFs): `./scripts/build_pages.sh`
+
+Note: si vous avez supprimé par erreur des fichiers d’exemple versionnés (ex: `cours-582-999-mo.typ`, `cours-md.typ`), vous pouvez les restaurer avec `git restore <fichiers>`.
+
 ### Entrypoints (scripts du dépôt)
 
 Ces scripts sont utilisés localement et en CI (rien de spécifique à GitHub dans la logique):

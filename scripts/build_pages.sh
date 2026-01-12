@@ -21,8 +21,17 @@ rm -rf "$out_dir"/*
 mkdir -p "$out_dir/exemples"
 
 echo "build_pages: compiling in-repo examples"
-typst compile --font-path "$font_path" "cours-582-999-mo.typ" "$out_dir/exemples/cours-582-999-mo.pdf"
-typst compile --font-path "$font_path" --input "md=cours-582-999-mo.md" "cours-md.typ" "$out_dir/exemples/cours-md.pdf"
+if [[ -f "cours-582-999-mo.typ" ]]; then
+  typst compile --font-path "$font_path" "cours-582-999-mo.typ" "$out_dir/exemples/cours-582-999-mo.pdf"
+else
+  echo "build_pages: skipping example cours-582-999-mo.typ (missing)"
+fi
+
+if [[ -f "cours-md.typ" && -f "cours-582-999-mo.md" ]]; then
+  typst compile --font-path "$font_path" --input "md=cours-582-999-mo.md" "cours-md.typ" "$out_dir/exemples/cours-md.pdf"
+else
+  echo "build_pages: skipping example cours-md.typ (missing cours-md.typ and/or cours-582-999-mo.md)"
+fi
 
 sources_file="cache/sources.json"
 
@@ -36,7 +45,16 @@ if [[ -f "$sources_file" ]]; then
     pdf_out="$out_dir/$annee/$semestre/$cid.pdf"
     md_in="$cache_dir/plan.md"
     echo "build_pages: typst compile $cid -> $pdf_out"
-    typst compile --font-path "$font_path" --input "md=$md_in" "cours-md.typ" "$pdf_out"
+    if [[ -f "cours-md.typ" ]]; then
+      typst compile --font-path "$font_path" --input "md=$md_in" "cours-md.typ" "$pdf_out"
+    else
+      entry="cours-$annee-$semestre-$cid.generated.typ"
+      if [[ ! -f "$entry" ]]; then
+        echo "build_pages: missing $entry (run ./scripts/prepare_repo.sh)" >&2
+        exit 2
+      fi
+      typst compile --font-path "$font_path" "$entry" "$pdf_out"
+    fi
   done < <(
     python3 - <<'PY'
 import json, re

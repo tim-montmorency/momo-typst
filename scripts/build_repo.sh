@@ -8,6 +8,9 @@ cd "$repo_root"
 
 font_path="${TYPST_REPO_FONT_PATH:-fonts}"
 
+# Ensure cached GitHub plans and preview entrypoints exist (generated from cache/sources.json).
+./scripts/prepare_repo.sh
+
 compile() {
   local entry="$1"
   shift
@@ -15,8 +18,15 @@ compile() {
   typst compile --font-path "$font_path" "$entry" "$@"
 }
 
-# Local markdown example (in-repo)
-compile "cours-582-999-mo.typ"
+# Local markdown example (in-repo) — optional.
+if [[ -f "cours-582-999-mo.typ" ]]; then
+  compile "cours-582-999-mo.typ"
+elif [[ -f "cours-md.typ" && -f "cours-582-999-mo.md" ]]; then
+  echo "build_repo: typst compile cours-md.typ (md=cours-582-999-mo.md)"
+  typst compile --font-path "$font_path" --input "md=cours-582-999-mo.md" "cours-md.typ"
+else
+  echo "build_repo: skipping in-repo example (missing cours-582-999-mo.typ and/or cours-md.typ)"
+fi
 
 # Cached GitHub README example (first entry in cache/sources.json, if any)
 if [[ -f "cache/sources.json" ]]; then
@@ -52,9 +62,23 @@ PY
 )
 
   if [[ -n "$first_md" && -f "$first_md" ]]; then
-    echo "build_repo: typst compile cours-md.typ (md=$first_md)"
-    typst compile --font-path "$font_path" --input "md=$first_md" "cours-md.typ"
+    if [[ -f "cours-md.typ" ]]; then
+      echo "build_repo: typst compile cours-md.typ (md=$first_md)"
+      typst compile --font-path "$font_path" --input "md=$first_md" "cours-md.typ"
+    else
+      # Fallback: compile the first generated entrypoint (preview wrapper).
+      shopt -s nullglob
+      generated=( cours-*.generated.typ )
+      if [[ ${#generated[@]} -gt 0 ]]; then
+        echo "build_repo: typst compile ${generated[0]} (fallback, no cours-md.typ)"
+        typst compile --font-path "$font_path" "${generated[0]}"
+      else
+        echo "build_repo: no generated entrypoints found (expected cours-*.generated.typ)" >&2
+        exit 2
+      fi
+    fi
   else
-    echo "build_repo: no cached plan.md found yet (run ./scripts/prepare_repo.sh)"
+    echo "build_repo: no cached plan.md found yet (run ./scripts/prepare_repo.sh)" >&2
+    exit 2
   fi
 fi

@@ -39,20 +39,15 @@ for entry in "${entries[@]}"; do
   typst compile "${args[@]}" "$entry"
 done
 
-# Optionnel: compile tous les cours listés dans cache/sources.json via le wrapper cours-md.typ.
+# Optionnel: compiler tous les cours listés dans cache/sources.json.
+# - si cours-md.typ est présent: on compile via --input md=...
+# - sinon: on compile les entrypoints *.generated.typ générés par prepare_repo.sh
 if [[ -f "cache/sources.json" ]]; then
   echo "test_all: compiling cached courses from cache/sources.json"
-  while IFS=$'\t' read -r cid cache_dir; do
-    [[ -z "$cid" ]] && continue
-    md_in="$cache_dir/plan.md"
-    if [[ ! -f "$md_in" ]]; then
-      echo "test_all: missing $md_in" >&2
-      exit 2
-    fi
-    echo "test_all: typst compile cours-md.typ (course=$cid)"
-    typst compile --font-path "$font_path" --input "md=$md_in" "cours-md.typ" "/tmp/momo-typst-$cid.pdf"
-  done < <(
-    python3 - <<'PY'
+
+  if [[ -f "cours-md.typ" ]]; then
+    tmp_list="$(mktemp)"
+    python3 - <<'PY' > "$tmp_list"
 import json, re
 from pathlib import Path
 
@@ -77,10 +72,37 @@ for e in entries:
     cid = e.get("id")
     annee = e.get("annee")
     if cid and annee is not None:
+        semestre = derive_semestre(str(cid))
         out_dir = derive_out_dir(str(cid), annee)
-        print(f"{str(cid).strip().lower()}\t{out_dir}")
+    print(f"{annee}\t{semestre}\t{str(cid).strip().lower()}\t{out_dir}")
 PY
-  )
+
+    while IFS=$'\t' read -r annee semestre cid cache_dir; do
+      [[ -z "$cid" ]] && continue
+      md_in="$cache_dir/plan.md"
+      if [[ ! -f "$md_in" ]]; then
+        echo "test_all: missing $md_in" >&2
+        rm -f "$tmp_list"
+        exit 2
+      fi
+      label="$annee-$semestre-$cid"
+      echo "test_all: typst compile cours-md.typ (course=$label)"
+      typst compile --font-path "$font_path" --input "md=$md_in" "cours-md.typ" "/tmp/momo-typst-$label.pdf"
+    done < "$tmp_list"
+
+    rm -f "$tmp_list"
+  else
+    shopt -s nullglob
+    generated=( cours-*.generated.typ )
+    if [[ ${#generated[@]} -eq 0 ]]; then
+      echo "test_all: no cours-md.typ and no cours-*.generated.typ found" >&2
+      exit 2
+    fi
+    for entry in "${generated[@]}"; do
+      echo "test_all: typst compile $entry (generated)"
+      typst compile --font-path "$font_path" "$entry" "/tmp/momo-typst-${entry%.generated.typ}.pdf"
+    done
+  fi
 fi
 
 echo "test_all: OK"
