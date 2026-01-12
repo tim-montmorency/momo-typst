@@ -10,7 +10,8 @@ L’objectif: garder une mise en page uniforme (marges, titres, en-tête, pagina
 - `data/cours.typ` : métadonnées de cours (heures, pondération, titre…) — source de vérité via `numero_cours`
 - `data/botin.typ` : botin des personnes (nom, courriel, bureau…) — source de vérité via `id_prof` / `ids_profs`
 - `data/bureaux.typ` : répertoire des bureaux (pour éviter la redondance quand un bureau est partagé)
-- `syllabus.typ` : exemple de plan de cours (syllabus) qui compile directement
+- `cache/` : cache local (généré) + [cache/sources.json](cache/sources.json)
+- `examples/` : exemples de sources locales (simulent des dépôts externes)
 
 ## Prérequis
 
@@ -52,8 +53,6 @@ Compilez avec:
 - Compiler quelques PDFs de référence: `./scripts/build_repo.sh`
 - Générer le site Pages (HTML + PDFs): `./scripts/build_pages.sh`
 
-Note: si vous avez supprimé par erreur des fichiers d’exemple versionnés (ex: `cours-582-601-mo-github.typ`, `cours-md.typ`), vous pouvez les restaurer avec `git restore <fichiers>`.
-
 ### Entrypoints (scripts du dépôt)
 
 Ces scripts sont utilisés localement et en CI (rien de spécifique à GitHub dans la logique):
@@ -85,55 +84,26 @@ Si vous utilisez Nix, vous pouvez exécuter la CI locale dans un environnement �
 
 ### Compiler un exemple (racine du dépôt)
 
-Depuis la racine du dépôt:
+Le flux recommandé passe par `cache/sources.json`:
 
-- Un entrypoint `.typ` existant à la racine: `typst compile --font-path fonts <fichier>.typ`
-- Wrapper générique: `typst compile --font-path fonts --input md=<un-fichier>.md cours-md.typ`
+1) Préparer le dépôt (cache + entrypoints générés):
+
+- `./scripts/prepare_repo.sh`
+
+2) Compiler un cours via un entrypoint généré (exemple):
+
+- `typst compile --font-path fonts cours-2026-hiver-582-601-mo.generated.typ`
 
 Le logo par défaut est `cm_logo.png` à la racine. Remplacez le fichier si nécessaire.
 
 ### Prévisualiser un cours (VS Code)
 
-Ouvrez un fichier `cours-*.typ` (ex: `cours-582-501-mo.typ`).
+Après `./scripts/prepare_repo.sh`, ouvrez un fichier `cours-*.generated.typ` (ex: `cours-2026-hiver-582-601-mo.generated.typ`).
 
 La prévisualisation (Tinymist) est configurée pour utiliser les polices du dépôt via `.vscode/settings.json` (font paths + désactivation des polices système pour un rendu reproductible).
 
 - `numero_cours` alimente automatiquement la page couverture à partir de `data/cours.typ`
 - `id_prof` alimente `prof / courriel / bureau` à partir de `data/botin.typ` (et les bureaux partagés via `data/bureaux.typ`)
-
-### Écrire le contenu en Markdown
-
-Le modèle recommandé est:
-
-- un fichier `.typ` très mince (point d’entrée) qui ne fait que charger le Markdown;
-- un fichier `.md` du même nom qui contient:
-  - un frontmatter YAML (les champs du gabarit), puis
-  - le contenu du plan de cours en Markdown.
-
-Exemple: [cours-582-611-mo.typ](cours-582-611-mo.typ) charge [cours-582-611-mo.md](cours-582-611-mo.md).
-
-Le rendu Markdown utilise le package `cmarker` (CommonMark) et le frontmatter YAML est lu automatiquement au début du fichier.
-
-#### Option: un seul wrapper `.typ` pour tous les cours
-
-Typst n’expose pas directement le nom/chemin du fichier `.typ` courant, donc on ne peut pas déduire automatiquement `mon-fichier.md` à partir de `mon-fichier.typ`.
-
-À la place, vous pouvez utiliser la fonction `charger_plan_de_cours_md_input(...)` (dans `lib.typ`) pour lire le chemin du Markdown via `--input md=...`.
-
-Exemple de wrapper minimal:
-
-```typst
-#import "lib.typ": plan_de_cours, charger_plan_de_cours_md_input
-
-#let (params, corps) = charger_plan_de_cours_md_input()
-#show: plan_de_cours.with(..params)
-#corps
-```
-
-- Exemple:
-  - `typst compile --font-path fonts --input md=cours-582-611-mo.md cours-md.typ cours-582-611-mo.pdf`
-
-Note: si vous utilisez cet exemple, créez votre propre `cours-md.typ` à la racine du dépôt.
 
 #### Option recommandée (preview): entrypoints `.typ` générés
 
@@ -152,24 +122,10 @@ Pour repartir de zéro (côté “root”), vous pouvez faire:
 ./scripts/prepare_repo.sh
 ```
 
-#### Option: plan de cours hébergé dans un README GitHub
+#### Notes: cours hébergé dans un README GitHub
 
 Typst (dans ce repo) ne télécharge pas directement du contenu HTTP(S) pendant la compilation.
-Le workflow recommandé est donc:
-
-```sh
-python3 scripts/fetch_github_plan.py \
-  "https://raw.githubusercontent.com/<org>/<repo>/refs/heads/<branch>/README.md" \
-  cache/mon-cours
-
-typst compile --font-path fonts cours-md.typ --input md=cache/mon-cours/plan.md
-```
-
-Pour automatiser le caching de plusieurs cours, ajoutez les URLs dans `cache/sources.json` puis exécutez:
-
-```sh
-python3 scripts/fetch_github_plan.py --sources-file cache/sources.json
-```
+Le contenu est donc mis en cache via `./scripts/prepare_repo.sh` (qui lit `cache/sources.json`).
 
 ##### Comment les profs ajoutent leur plan (recommandé)
 
@@ -226,7 +182,8 @@ Notes:
 - Le script génère `cache/<annee>/<automne|hiver>/<id>/plan.md` (un wrapper Markdown avec frontmatter YAML, ex: `numero_cours`).
 - Il génère aussi `cache/<annee>/<automne|hiver>/<id>/cours_data.snippet.typ` pour copier/coller les champs de page 2 dans `data/cours.typ`.
 
-Un exemple prêt à compiler est fourni dans `cours-582-601-mo-github.typ` (utilise `--input md=...`).
+Compilation (recommandée): utilisez les entrypoints `cours-*.generated.typ` créés par `./scripts/prepare_repo.sh`.
+
 
 ### Plateformes pédagogiques
 
