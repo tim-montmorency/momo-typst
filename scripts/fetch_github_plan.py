@@ -164,6 +164,18 @@ def is_remote_url(s: str) -> bool:
     return s.startswith("http://") or s.startswith("https://")
 
 
+def is_safe_local_relative_path(p: str) -> bool:
+    # reject empty, absolute, home-tilde, Windows drive, or traversal
+    if not p:
+        return False
+    if p.startswith("/") or p.startswith("~"):
+        return False
+    if re.match(r"^[A-Za-z]:\\", p):
+        return False
+    parts = Path(p).parts
+    return ".." not in parts and "." not in parts
+
+
 def read_url_text(url: str) -> str:
     req = urllib.request.Request(url, headers={"User-Agent": "momo-typst-fetch/1.0"})
     with urllib.request.urlopen(req) as resp:
@@ -239,14 +251,33 @@ def main() -> int:
     args = ap.parse_args()
 
     def cache_one(readme_url: str, out_dir: Path, frontmatter: dict | None = None) -> int:
-        if not is_remote_url(readme_url):
-            print(f"readme_url must be http(s): {readme_url}", file=sys.stderr)
-            return 2
+        repo_root = Path.cwd().resolve()
 
-        base_url = readme_url.rsplit("/", 1)[0] + "/"
+        base_url: str | None = None
+        base_dir: Path | None = None
 
-        print(f"Fetching README: {readme_url}")
-        md = read_url_text(readme_url)
+        if is_remote_url(readme_url):
+            base_url = readme_url.rsplit("/", 1)[0] + "/"
+            print(f"Fetching README: {readme_url}")
+            md = read_url_text(readme_url)
+        else:
+            # Local path (repo-relative).
+            local = str(readme_url).strip()
+            if not is_safe_local_relative_path(local):
+                print(f"local readme path must be repo-relative and non-traversing: {local}", file=sys.stderr)
+                return 2
+            readme_path = (repo_root / local).resolve()
+            if repo_root not in readme_path.parents:
+                print(f"local readme must be inside repo: {local}", file=sys.stderr)
+                return 2
+            if not readme_path.exists():
+                print(f"local readme not found: {local}", file=sys.stderr)
+                return 2
+            if readme_path.is_dir():
+                readme_path = readme_path / "README.md"
+            base_dir = readme_path.parent
+            print(f"Reading local README: {local}")
+            md = readme_path.read_text(encoding="utf-8")
 
         out_dir.mkdir(parents=True, exist_ok=True)
         (out_dir / "README.md").write_text(md, encoding="utf-8")
@@ -299,13 +330,31 @@ def main() -> int:
             print("No relative images found")
 
         for rel in rel_images:
-            abs_url = urllib.parse.urljoin(base_url, rel)
             dest = out_dir / rel
-            print(f"- {rel} <- {abs_url}")
-            try:
-                download(abs_url, dest)
-            except Exception as e:
-                print(f"  WARN: failed to download {abs_url}: {e}", file=sys.stderr)
+            if base_url is not None:
+                abs_url = urllib.parse.urljoin(base_url, rel)
+                print(f"- {rel} <- {abs_url}")
+                try:
+                    download(abs_url, dest)
+                except Exception as e:
+                    print(f"  WARN: failed to download {abs_url}: {e}", file=sys.stderr)
+            elif base_dir is not None:
+                src = (base_dir / rel).resolve()
+                # Prevent traversal outside the local repo folder.
+                if base_dir not in src.parents and src != base_dir:
+                    print(f"  WARN: skipping unsafe local image path: {rel}", file=sys.stderr)
+                    continue
+                if not src.exists() or not src.is_file():
+                    print(f"  WARN: local image not found: {rel}", file=sys.stderr)
+                    continue
+                print(f"- {rel} <- {src}")
+                try:
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    dest.write_bytes(src.read_bytes())
+                except Exception as e:
+                    print(f"  WARN: failed to copy {src}: {e}", file=sys.stderr)
+            else:
+                print(f"  WARN: no base_url/base_dir to resolve image: {rel}", file=sys.stderr)
 
         print(f"Done. Local README: {out_dir / 'README.md'}")
         return 0
@@ -331,14 +380,17 @@ def main() -> int:
                 continue
 
             readme_url = entry.get("readme_url") or entry.get("url")
+            local_repo = entry.get("local_repo")
+            local_readme = entry.get("local_readme")
+            local_readme_file = entry.get("local_readme_file")
             out_dir = entry.get("out_dir")
             entry_id = entry.get("id")
             numero_cours = entry.get("numero_cours")
             annee = entry.get("annee")
 
-            if not readme_url:
+            if not readme_url and not local_repo and not local_readme:
                 print(
-                    f"Skipping entry #{idx}{' (' + str(entry_id) + ')' if entry_id else ''}: missing readme_url",
+                    f"Skipping entry #{idx}{' (' + str(entry_id) + ')' if entry_id else ''}: missing readme_url/local_repo/local_readme",
                     file=sys.stderr,
                 )
                 rc = 2
@@ -348,6 +400,32 @@ def main() -> int:
                 print(f"Skipping entry #{idx}: missing id", file=sys.stderr)
                 rc = 2
                 continue
+
+            # Local sources: allow pointing to a local repo directory or a readme file.
+            if local_readme and readme_url:
+                print(
+                    f"Skipping entry #{idx}{' (' + str(entry_id) + ')' if entry_id else ''}: provide only one of readme_url or local_readme",
+                    file=sys.stderr,
+                )
+                rc = 2
+                continue
+            if local_repo and (readme_url or local_readme):
+                print(
+                    f"Skipping entry #{idx}{' (' + str(entry_id) + ')' if entry_id else ''}: provide only one of readme_url or local_repo/local_readme",
+                    file=sys.stderr,
+                )
+                rc = 2
+                continue
+
+            if local_repo:
+                local_repo_s = str(local_repo).strip().rstrip("/")
+                if local_readme_file:
+                    local_readme_file_s = str(local_readme_file).strip()
+                else:
+                    local_readme_file_s = "README.md"
+                readme_url = f"{local_repo_s}/{local_readme_file_s}"
+            elif local_readme:
+                readme_url = str(local_readme).strip()
 
             # Nouveau format: out_dir et numero_cours sont dérivés.
             try:

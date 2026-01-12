@@ -18,14 +18,22 @@ compile() {
   typst compile --font-path "$font_path" "$entry" "$@"
 }
 
-# Local markdown example (in-repo) — optional.
-if [[ -f "cours-582-999-mo.typ" ]]; then
-  compile "cours-582-999-mo.typ"
-elif [[ -f "cours-md.typ" && -f "cours-582-999-mo.md" ]]; then
-  echo "build_repo: typst compile cours-md.typ (md=cours-582-999-mo.md)"
-  typst compile --font-path "$font_path" --input "md=cours-582-999-mo.md" "cours-md.typ"
-else
-  echo "build_repo: skipping in-repo example (missing cours-582-999-mo.typ and/or cours-md.typ)"
+# In-repo examples (optional). Compile the first available root-level .typ
+# entrypoint (excluding generated wrappers and the lib facade).
+shopt -s nullglob
+examples=( *.typ )
+compiled_example=false
+for entry in "${examples[@]}"; do
+  [[ "$entry" == "lib.typ" ]] && continue
+  [[ "$entry" == "cours-md.typ" ]] && continue
+  [[ "$entry" == *.generated.typ ]] && continue
+  compile "$entry"
+  compiled_example=true
+  break
+done
+
+if [[ "$compiled_example" != true ]]; then
+  echo "build_repo: skipping in-repo examples (none found)"
 fi
 
 # Cached GitHub README example (first entry in cache/sources.json, if any)

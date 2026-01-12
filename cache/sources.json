@@ -5,8 +5,9 @@
     "readme_url": "https://raw.githubusercontent.com/tim-montmorency/582-601-MO-PLAN_DE_COURS/refs/heads/main/README.md"
   },
   {
-    "id": "582-601-mo",
-    "annee": 2025,
-    "readme_url": "https://raw.githubusercontent.com/tim-montmorency/582-601-MO-PLAN_DE_COURS/refs/heads/main/README.md"
+    "id": "582-999-mo",
+    "annee": 2026,
+    "local_repo": "examples/repository-local-example",
+    "local_readme_file": "README.md"
   }
 ]

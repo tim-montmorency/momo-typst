@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="240" viewBox="0 0 1200 240">
+  <rect width="1200" height="240" fill="#f3f4f6"/>
+  <text x="60" y="140" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="64" fill="#111827">
+    Exemple local
+  </text>
+</svg>

@@ -16,6 +16,14 @@ font_path="${TYPST_REPO_FONT_PATH:-fonts}"
 shopt -s nullglob
 entries=( *.typ )
 
+# Optional: pick an in-repo course Markdown file to exercise cours-md.typ.
+# (Avoid using README.md or other non-course markdown.)
+md_examples=( cours-*.md )
+md_example=""
+if [[ ${#md_examples[@]} -gt 0 ]]; then
+  md_example="${md_examples[0]}"
+fi
+
 if [[ ${#entries[@]} -eq 0 ]]; then
   echo "test_all: no .typ files found at repo root" >&2
   exit 2
@@ -31,8 +39,12 @@ for entry in "${entries[@]}"; do
 
   # Special case: wrapper that needs md input.
   if [[ "$entry" == "cours-md.typ" ]]; then
-    # Use a stable in-repo markdown example.
-    args+=("--input" "md=cours-582-999-mo.md")
+    if [[ -n "$md_example" ]]; then
+      args+=("--input" "md=$md_example")
+    else
+      echo "test_all: skipping cours-md.typ (no root-level .md available)"
+      continue
+    fi
   fi
 
   echo "test_all: typst compile $entry"

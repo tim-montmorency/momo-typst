@@ -21,16 +21,28 @@ rm -rf "$out_dir"/*
 mkdir -p "$out_dir/exemples"
 
 echo "build_pages: compiling in-repo examples"
-if [[ -f "cours-582-999-mo.typ" ]]; then
-  typst compile --font-path "$font_path" "cours-582-999-mo.typ" "$out_dir/exemples/cours-582-999-mo.pdf"
-else
-  echo "build_pages: skipping example cours-582-999-mo.typ (missing)"
-fi
 
-if [[ -f "cours-md.typ" && -f "cours-582-999-mo.md" ]]; then
-  typst compile --font-path "$font_path" --input "md=cours-582-999-mo.md" "cours-md.typ" "$out_dir/exemples/cours-md.pdf"
+# Compile root-level .typ examples (excluding generated wrappers and lib facade).
+shopt -s nullglob
+examples=( *.typ )
+for entry in "${examples[@]}"; do
+  [[ "$entry" == "lib.typ" ]] && continue
+  [[ "$entry" == "cours-md.typ" ]] && continue
+  [[ "$entry" == *.generated.typ ]] && continue
+
+  out_pdf="$out_dir/exemples/${entry%.typ}.pdf"
+  echo "build_pages: typst compile $entry -> $out_pdf"
+  typst compile --font-path "$font_path" "$entry" "$out_pdf"
+done
+
+# If we have a root-level course Markdown file, also compile cours-md.typ as a generic example.
+md_examples=( cours-*.md )
+if [[ -f "cours-md.typ" && ${#md_examples[@]} -gt 0 ]]; then
+  md_example="${md_examples[0]}"
+  echo "build_pages: typst compile cours-md.typ (md=$md_example)"
+  typst compile --font-path "$font_path" --input "md=$md_example" "cours-md.typ" "$out_dir/exemples/cours-md.pdf"
 else
-  echo "build_pages: skipping example cours-md.typ (missing cours-md.typ and/or cours-582-999-mo.md)"
+  echo "build_pages: skipping example cours-md.typ (no cours-md.typ and/or no root-level .md)"
 fi
 
 sources_file="cache/sources.json"
@@ -108,10 +120,16 @@ index="$out_dir/index.html"
   echo "  <p>Généré par <code>./scripts/build_pages.sh</code>.</p>"
 
   echo "  <h2>Exemples</h2>"
-  echo "  <ul>"
-  echo "    <li><a href=\"./exemples/cours-582-999-mo.pdf\">cours-582-999-mo.pdf</a></li>"
-  echo "    <li><a href=\"./exemples/cours-md.pdf\">cours-md.pdf</a></li>"
-  echo "  </ul>"
+  if ls -1 "$out_dir/exemples"/*.pdf >/dev/null 2>&1; then
+    echo "  <ul>"
+    while IFS= read -r p; do
+      rel="${p#${out_dir}/}"
+      echo "    <li><a href=\"./$rel\">$rel</a></li>"
+    done < <(find "$out_dir/exemples" -type f -name '*.pdf' | LC_ALL=C sort)
+    echo "  </ul>"
+  else
+    echo "  <p><em>Aucun exemple compilé.</em></p>"
+  fi
 
   if ls -1 "$out_dir"/*/*/*.pdf >/dev/null 2>&1; then
     echo "  <h2>Cours (cache/sources.json)</h2>"

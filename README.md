@@ -52,7 +52,7 @@ Compilez avec:
 - Compiler quelques PDFs de référence: `./scripts/build_repo.sh`
 - Générer le site Pages (HTML + PDFs): `./scripts/build_pages.sh`
 
-Note: si vous avez supprimé par erreur des fichiers d’exemple versionnés (ex: `cours-582-999-mo.typ`, `cours-md.typ`), vous pouvez les restaurer avec `git restore <fichiers>`.
+Note: si vous avez supprimé par erreur des fichiers d’exemple versionnés (ex: `cours-582-601-mo-github.typ`, `cours-md.typ`), vous pouvez les restaurer avec `git restore <fichiers>`.
 
 ### Entrypoints (scripts du dépôt)
 
@@ -66,18 +66,29 @@ Ces scripts sont utilisés localement et en CI (rien de spécifique à GitHub da
 
 Note: `./scripts/prepare_repo.sh` génère aussi des fichiers `.typ` (non versionnés) afin de pouvoir prévisualiser chaque cours directement dans VS Code (Tinymist) sans passer par `--input`.
 
+### Sources (cache/sources.json)
+
+Le fichier [cache/sources.json](cache/sources.json) peut pointer vers:
+
+- **GitHub (remote)**: `readme_url` (URL raw vers `README.md`)
+- **Local (dans ce dépôt)**: `local_repo` + `local_readme_file` (ou `local_readme`)
+
+Dans tous les cas, le script de cache écrit `cache/<annee>/<semestre>/<id>/plan.md` et copie aussi les images relatives.
+
+Un exemple de source locale est inclus dans [examples/repository-local-example/README.md](examples/repository-local-example/README.md).
+
 ### Nix (environnement reproductible)
 
 Si vous utilisez Nix, vous pouvez exécuter la CI locale dans un environnement épinglé:
 
 - `nix develop -c ./scripts/ci.sh`
 
-### Compiler l’exemple (cours-582-999)
+### Compiler un exemple (racine du dépôt)
 
 Depuis la racine du dépôt:
 
-- Compilation PDF: `typst compile --font-path fonts cours-582-999-mo.typ`
-- Mode watch: `typst watch --font-path fonts cours-582-999-mo.typ`
+- Un entrypoint `.typ` existant à la racine: `typst compile --font-path fonts <fichier>.typ`
+- Wrapper générique: `typst compile --font-path fonts --input md=<un-fichier>.md cours-md.typ`
 
 Le logo par défaut est `cm_logo.png` à la racine. Remplacez le fichier si nécessaire.
 
