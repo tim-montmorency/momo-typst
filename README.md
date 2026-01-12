@@ -5,7 +5,8 @@ L’objectif: garder une mise en page uniforme (marges, titres, en-tête, pagina
 
 ## Structure
 
-- `lib.typ` : template commun (à importer dans tous les documents)
+- `lib.typ` : façade stable (API publique) à importer dans tous les documents
+- `lib/` : implémentation atomisée (pages, markdown, utilitaires)
 - `data/cours.typ` : métadonnées de cours (heures, pondération, titre…) — source de vérité via `numero_cours`
 - `data/botin.typ` : botin des personnes (nom, courriel, bureau…) — source de vérité via `id_prof` / `ids_profs`
 - `data/bureaux.typ` : répertoire des bureaux (pour éviter la redondance quand un bureau est partagé)
