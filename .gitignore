@@ -3,8 +3,8 @@
 *.log
 *.aux
 
-# GitHub Pages: on veut versionner les PDFs dans docs/
-!docs/*.pdf
+# GitHub Pages: le site (docs/) est généré par CI
+docs/
 
 # Typst cache/output folders (optional)
 .typst/
