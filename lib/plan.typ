@@ -203,6 +203,37 @@
   set par(justify: true, leading: INTERLIGNE_CORPS)
   set heading(numbering: none)
 
+  // Tables (incluant celles générées depuis Markdown): style régulier et lisible.
+  // Placé après la couverture pour ne pas affecter son tableau.
+  set table(
+    inset: (x: 0.55em, y: 0.25em),
+    stroke: 0.8pt,
+  )
+
+  // Forcer les tables à prendre toute la largeur disponible.
+  // Typst n'a pas de `width` sur `table`: on force donc les colonnes à `1fr`.
+  let _table_pleine_largeur = (it) => {
+    let n = it.columns.len()
+    if n == 0 { it }
+    else {
+      let cols = range(0, n).map(_ => 1fr)
+      table(
+        columns: cols,
+        inset: it.inset,
+        align: it.align,
+        fill: it.fill,
+        stroke: it.stroke,
+        ..it.children,
+      )
+    }
+  }
+
+  show table: it => {
+    // Évite que la table reconstruite repasse dans ce `show table`.
+    show table: none
+    _table_pleine_largeur(it)
+  }
+
   // Heading spécial pour le « bloc titre » (numérotation désactivée).
   // On le garde comme `heading` pour qu'il soit cliquable dans l'outline PDF.
   show heading.where(level: 1, numbering: none): it => block({

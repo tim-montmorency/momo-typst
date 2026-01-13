@@ -2,7 +2,7 @@
 
 #import "@preview/cmarker:0.1.8"
 
-#import "../paths.typ": _resoudre_source_asset
+#import "../paths.typ": _est_url, _resoudre_source_asset
 
 #let _retirer_frontmatter_yaml(md) = {
   let lines = md.split("\n")
@@ -104,14 +104,55 @@
   (md, none, "", none)
 }
 
+#let _autolink_urls_md(md) = {
+  // Rend les URLs "nues" cliquables en les convertissant en autolinks Markdown.
+  // Stratégie conservatrice: uniquement en début de ligne ou après un espace,
+  // et s'arrête avant ")" pour éviter de casser des parenthèses.
+  // NOTE: n'affecte pas les liens existants du type "](https://...)".
+  let s = str(md)
+
+  // Détache une ponctuation finale courante (.,;:!?) pour ne pas l'inclure
+  // dans l'URL cliquable.
+  let _split_ponctuation_fin = (url) => {
+    let m = url.match(regex("^(.*?)([\\.,;:!?]+)$"))
+    if m == none { (url, "") } else { (m.captures.at(0), m.captures.at(1)) }
+  }
+
+  // Remplacement UTF-8 safe via regex + callback.
+  // - capture(0): début de chaîne ou whitespace
+  // - capture(1): URL
+  s.replace(
+    regex("(^|\\s)(https?://[^\\s\\)\\]}>]+)"),
+    m => {
+      let prefix = m.captures.at(0)
+      let url = m.captures.at(1)
+      let (base, tail) = _split_ponctuation_fin(url)
+      prefix + "<" + base + ">" + tail
+    },
+  )
+}
+
 #let _rendre_markdown(md, base_url: none) = {
+  let md2 = _autolink_urls_md(md)
   let (_, corps) = cmarker.render-with-metadata(
-    md,
+    md2,
     // Pas de métadonnées sur les fragments.
     metadata-block: none,
-    scope: (image: (source, alt: none, format: auto) => {
-      image(_resoudre_source_asset(source, base_url: base_url), alt: alt, format: format)
-    }),
+    scope: (
+      image: (source, alt: none, format: auto) => {
+        image(_resoudre_source_asset(source, base_url: base_url), alt: alt, format: format)
+      },
+
+      // Liens: rendre les URLs externes visiblement cliquables (bleu + souligné).
+      link: (dest, body) => {
+        let d = str(dest)
+        if _est_url(d) {
+          link(d)[#underline(stroke: blue)[#text(fill: blue)[#body]]]
+        } else {
+          link(d)[#body]
+        }
+      },
+    ),
   )
   corps
 }

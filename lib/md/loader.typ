@@ -128,7 +128,23 @@
     md_brut,
     metadata-block: "frontmatter-yaml",
     // Important: résoudre les images relativement au projet (pas au package cmarker).
-    scope: (image: (source, alt: none, format: auto) => image(_resoudre_source_asset(source, base_url: md_base_dir), alt: alt, format: format)),
+    scope: (
+      image: (source, alt: none, format: auto) => image(
+        _resoudre_source_asset(source, base_url: md_base_dir),
+        alt: alt,
+        format: format,
+      ),
+
+      // Liens: rendre les URLs externes visiblement cliquables (bleu + souligné).
+      link: (dest, body) => {
+        let d = str(dest)
+        if _est_url(d) {
+          link(d)[#underline(stroke: blue)[#text(fill: blue)[#body]]]
+        } else {
+          link(d)[#body]
+        }
+      },
+    ),
   )
 
   let meta = if meta_brut == none { (:) } else { meta_brut }
@@ -268,15 +284,15 @@
   let corps = []
   if a1 != none and str(a1).trim() != "" { corps = corps + _rendre_markdown(a1, base_url: md_base_dir) }
   if sec_contexte != none {
-    if corps != [] { corps = corps + v(1.0em) }
+    if corps != [] { corps = corps + v(0.6em) }
     corps = corps + section_contexte_apprentissage(sec_contexte)
-    corps = corps + v(1.0em)
+    corps = corps + v(0.6em)
   }
   if a2 != none and str(a2).trim() != "" { corps = corps + _rendre_markdown(a2, base_url: md_base_dir) }
   if sec_materiel != none {
-    if corps != [] { corps = corps + v(1.0em) }
+    if corps != [] { corps = corps + v(0.6em) }
     corps = corps + section_materiel_requis(sec_materiel)
-    corps = corps + v(1.0em)
+    corps = corps + v(0.6em)
   }
 
   // Plus de traitement spécial pour "Évaluations sommatives": on laisse passer
