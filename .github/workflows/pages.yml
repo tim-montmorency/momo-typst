@@ -1,4 +1,4 @@
-name: Pages
+name: Rebuild PDFs & Publish Website
 
 on:
   push:

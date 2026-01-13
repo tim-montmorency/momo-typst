@@ -53,6 +53,12 @@ Compilez avec:
 - Compiler quelques PDFs de référence: `./scripts/build_repo.sh`
 - Générer le site Pages (HTML + PDFs): `./scripts/build_pages.sh`
 
+### Rebuild + publication (GitHub Actions)
+
+Le dépôt inclut un workflow GitHub Pages qui peut être déclenché manuellement pour **recompiler tous les PDFs** et **republier le site** (utile quand les plans distants ont changé sans modification de code).
+
+- GitHub → onglet **Actions** → workflow **Rebuild PDFs & Publish Website** → **Run workflow**
+
 ### Entrypoints (scripts du dépôt)
 
 Ces scripts sont utilisés localement et en CI (rien de spécifique à GitHub dans la logique):
