@@ -6,7 +6,7 @@
 #let page_presentation_du_cours(meta_cours) = {
   // Corps: Geist Regular, interlignage 120% (hérité du gabarit) — on garde
   // la même valeur ici pour les blocs spécifiques de la page 2.
-  set par(justify: true, leading: INTERLIGNE_CORPS)
+  set par(justify: false, leading: INTERLIGNE_CORPS)
 
   let description = if meta_cours != none { meta_cours.at("description_du_cours", default: none) } else { none }
   let objectif = if meta_cours != none { meta_cours.at("objectif_integrateur", default: none) } else { none }

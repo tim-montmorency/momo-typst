@@ -3,7 +3,7 @@
 #import "../utils.typ": _case_a_cocher, _colonnes_fr
 
 #import "../paths.typ": _resoudre_source_asset
-#import "../typography.typ": FONT_CORPS, FONT_TITRES, INTERLETTRE_DEFAUT, TAILLE_CORPS, INTERLIGNE_CORPS, POIDS_TITRES
+#import "../typography.typ": FONT_CORPS, FONT_TITRES, INTERLETTRE_DEFAUT, TAILLE_CORPS, INTERLIGNE_CORPS, POIDS_TITRES, COULEUR_TITRE_1, COULEUR_LIGNE_TABLE
 
 #let page_couverture_plan_de_cours(
   // Chemin d'image optionnel pour le logo (ex: "assets/cm_logo.png").
@@ -61,7 +61,7 @@
     if logo_effectif != none { image(logo_effectif, height: 1.6cm) } else { [] },
     block({
       set par(leading: 1em)
-      set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 18pt, weight: POIDS_TITRES)
+      set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 18pt, weight: POIDS_TITRES, fill: COULEUR_TITRE_1)
       titre_droite
     }),
   )
@@ -69,7 +69,7 @@
   v(1.2cm)
   align(center, block({
     set par(leading: 1em)
-    set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 22pt, weight: POIDS_TITRES)
+    set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 22pt, weight: POIDS_TITRES, fill: COULEUR_TITRE_1)
     instruction
   }))
   v(0.5cm)
@@ -155,7 +155,14 @@
     align: (right, left),
     inset: 0pt,
     // Une seule ligne verticale entre les colonnes, sans bordures externes.
-    stroke: (x: 1pt, y: none, top: none, bottom: none, left: none, right: none),
+    stroke: (
+      x: (paint: COULEUR_LIGNE_TABLE, thickness: 1pt),
+      y: none,
+      top: none,
+      bottom: none,
+      left: none,
+      right: none,
+    ),
 
     _cell_label([Nombre d’heures d’enseignement :]), _cell_valeur(texte_heures),
     _cell_label([Pondération :]), _cell_valeur(texte_ponderation),

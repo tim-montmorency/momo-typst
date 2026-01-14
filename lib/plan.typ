@@ -4,7 +4,7 @@
 #import "data.typ": _exiger_cours, _exiger_personne, _exiger_bureau, DEPARTEMENT_PROF_DEFAUT
 #import "pages/couverture.typ": page_couverture_plan_de_cours
 #import "pages/presentation.typ": page_presentation_du_cours
-#import "typography.typ": FONT_CORPS, FONT_TITRES, INTERLETTRE_DEFAUT, TAILLE_CORPS, INTERLIGNE_CORPS, POIDS_TITRES
+#import "typography.typ": FONT_CORPS, FONT_TITRES, INTERLETTRE_DEFAUT, TAILLE_CORPS, INTERLIGNE_CORPS, POIDS_TITRES, COULEUR_TITRE_1, COULEUR_TITRE_2, COULEUR_TITRE_3
 
 #let plan_de_cours(
   // Page couverture
@@ -200,7 +200,7 @@
   // - Corps: Geist Regular, interlignage 120%, inter-lettrage 0
   // - Titres/sous-titres: Inter Tight SemiBold, inter-lettrage 0
   set text(font: FONT_CORPS, tracking: INTERLETTRE_DEFAUT, TAILLE_CORPS)
-  set par(justify: true, leading: INTERLIGNE_CORPS)
+  set par(justify: false, leading: INTERLIGNE_CORPS)
   set heading(numbering: none)
 
   // Heading spécial pour le « bloc titre » (numérotation désactivée).
@@ -208,7 +208,7 @@
   show heading.where(level: 1, numbering: none): it => block({
     align(center, block({
       set par(leading: 1em)
-      set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 22pt, weight: POIDS_TITRES)
+      set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 22pt, weight: POIDS_TITRES, fill: COULEUR_TITRE_1)
       it
     }))
     v(0.8em)
@@ -231,14 +231,14 @@
   // NOTE: doit être défini avant la page 2 pour qu'elle ait le même style.
   show heading.where(level: 2): it => block({
     set par(leading: 1em)
-    set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 16pt, weight: POIDS_TITRES)
+    set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 16pt, weight: POIDS_TITRES, fill: COULEUR_TITRE_2)
     it.body
     v(0.8em)
   })
 
   show heading.where(level: 3): it => block({
     set par(leading: 1.1em)
-    set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 13pt, weight: POIDS_TITRES)
+    set text(font: FONT_TITRES, tracking: INTERLETTRE_DEFAUT, 13pt, weight: POIDS_TITRES, fill: COULEUR_TITRE_3)
     it.body
     v(0.5em)
   })

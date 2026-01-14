@@ -3,6 +3,7 @@
 #import "@preview/cmarker:0.1.8"
 
 #import "../paths.typ": _est_url, _resoudre_source_asset
+#import "../typography.typ": COULEUR_LIGNE_TABLE
 
 #let _retirer_frontmatter_yaml(md) = {
   let lines = md.split("\n")
@@ -138,6 +139,97 @@
     md2,
     // Pas de métadonnées sur les fragments.
     metadata-block: none,
+    // Override table construction so Markdown tables fill available width.
+    // (A `show table` rule can't reliably rewrite column sizing because `it` is
+    // already an element; we need to control construction.)
+    html: (
+      table: (attrs, body) => {
+        // Re-implement cmarker’s default table tag extraction, but with
+        // full-width columns + themed strokes.
+        let tag-content(content, tag, data: none) = [#metadata((tag, data))#content]
+        let is-tagged(content, tag) = (
+          content.func() == [].func()
+            and content.children.len() == 2
+            and content.children.at(0).func() == metadata
+            and content.children.at(0).value.len() == 2
+            and content.children.at(0).value.at(0) == tag
+        )
+        let untag-content(content) = (..content.children.at(0).value, content.children.at(1))
+        let take-tagged-children(content, tag) = {
+          if type(tag) != array { tag = (tag,) }
+          let tagged = ()
+          let rest = ()
+          if tag.any(t => is-tagged(content, t)) {
+            tagged.push(untag-content(content))
+          } else if content.func() == [].func() {
+            for child in content.children {
+              if tag.any(t => is-tagged(child, t)) {
+                tagged.push(untag-content(child))
+              } else {
+                rest.push(child)
+              }
+            }
+          } else {
+            rest.push(content)
+          }
+          (tagged: tagged, rest: for r in rest { r })
+        }
+        let untag-children(content, tag) = take-tagged-children(content, tag).tagged
+
+        let rows = (header: (), body: (), footer: ())
+        for (tag, _, child) in untag-children(body, ("<tr>", "<thead>", "<tfoot>")) {
+          if tag == "<thead>" {
+            for (_, _, row) in untag-children(child, "<tr>") {
+              rows.header.push(untag-children(row, "<td>"))
+            }
+          } else if tag == "<tfoot>" {
+            for (_, _, row) in untag-children(child, "<tr>") {
+              rows.footer.push(untag-children(row, "<td>"))
+            }
+          } else if tag == "<tr>" {
+            rows.body.push(untag-children(child, "<td>"))
+          }
+        }
+
+        // Compute max column count.
+        let cols_n = calc.max(
+          ..rows.header.map(r => r.len()),
+          ..rows.body.map(r => r.len()),
+          ..rows.footer.map(r => r.len()),
+        )
+        let cols = range(0, cols_n).map(_ => 1fr)
+
+        // Expand cells into table.cell with rowspan/colspan.
+        let start-i = 0
+        for (k, section) in rows {
+          rows.insert(k, section.enumerate().map(((i, row)) => {
+            row.map(((_, attrs, td)) => {
+              let rowspan = int(attrs.at("rowspan", default: "1"))
+              let colspan = int(attrs.at("colspan", default: "1"))
+              table.cell(rowspan: rowspan, colspan: colspan, y: start-i + i, td)
+            })
+          }))
+          start-i += section.len()
+        }
+
+        let args = ()
+        if rows.header.len() != 0 {
+          args.push(table.header(..rows.header.flatten()))
+        }
+        args += rows.body.flatten()
+        if rows.footer.len() != 0 {
+          args.push(table.footer(..rows.footer.flatten()))
+        }
+
+        block(width: 100%)[
+          #table(
+            columns: cols,
+            stroke: (paint: COULEUR_LIGNE_TABLE),
+            ..args,
+          )
+        ]
+      },
+    ),
     scope: (
       image: (source, alt: none, format: auto) => {
         image(_resoudre_source_asset(source, base_url: base_url), alt: alt, format: format)
