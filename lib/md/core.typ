@@ -133,101 +133,75 @@
   )
 }
 
+#let _injecter_directives_typst(md) = {
+  // Permet d'envoyer un « signal » à Typst depuis le Markdown.
+  //
+  // Supporte:
+  // - <!-- typst:pagebreak -->
+  // - <!-- typst: pagebreak() -->
+  // - <typst-pagebreak/> (HTML)
+  //
+  // On réécrit le commentaire en tag HTML afin que cmarker puisse le mapper
+  // vers un élément Typst (voir `html:` dans _rendre_markdown).
+  let s = str(md)
+
+  // 1) Forme courte: pagebreak
+  s = s.replace(
+    regex("<!--\\s*typst:pagebreak\\s*-->"),
+    "\n<typstpagebreak></typstpagebreak>\n",
+  )
+
+  // 2) Forme générale (trusted): exécute une expression Typst.
+  // Important: cmarker ne lit pas les commentaires HTML, donc on convertit en
+  // HTML tag + attribut contenant l'expression.
+  //
+  // Exemple Markdown:
+  //   <!-- typst: pagebreak() -->
+  // Devient:
+  //   <typstexpr e="pagebreak()"></typstexpr>
+  //
+  // Notes:
+  // - On s'arrête au premier "-->".
+  // - On échappe les guillemets pour rester dans un attribut HTML.
+  s = s.replace(
+    regex("<!--\\s*typst:\\s*([\\s\\S]*?)\\s*-->"),
+    m => {
+      let expr = m.captures.at(0)
+      // Si c'est exactement "pagebreak" (sans parenthèses), on préfère la forme courte.
+      if lower(expr.trim()) == "pagebreak" {
+        "\n<typstpagebreak></typstpagebreak>\n"
+      } else {
+        let e = expr.replace("\"", "&quot;")
+        "\n<typstexpr e=\"" + e + "\"></typstexpr>\n"
+      }
+    },
+  )
+  // Supporte aussi le tag HTML directement, mais on le normalise vers un tag
+  // sans tiret pour éviter les limitations/outils qui gèrent mal les tags
+  // personnalisés avec '-'.
+  s = s.replace(
+    regex("<\\s*/?\\s*typst-pagebreak\\s*/?\\s*>"),
+    "<typstpagebreak></typstpagebreak>",
+  )
+  s
+}
+
 #let _rendre_markdown(md, base_url: none) = {
-  let md2 = _autolink_urls_md(md)
+  let md2 = _injecter_directives_typst(_autolink_urls_md(md))
   let (_, corps) = cmarker.render-with-metadata(
     md2,
     // Pas de métadonnées sur les fragments.
     metadata-block: none,
-    // Override table construction so Markdown tables fill available width.
-    // (A `show table` rule can't reliably rewrite column sizing because `it` is
-    // already an element; we need to control construction.)
     html: (
-      table: (attrs, body) => {
-        // Re-implement cmarker’s default table tag extraction, but with
-        // full-width columns + themed strokes.
-        let tag-content(content, tag, data: none) = [#metadata((tag, data))#content]
-        let is-tagged(content, tag) = (
-          content.func() == [].func()
-            and content.children.len() == 2
-            and content.children.at(0).func() == metadata
-            and content.children.at(0).value.len() == 2
-            and content.children.at(0).value.at(0) == tag
-        )
-        let untag-content(content) = (..content.children.at(0).value, content.children.at(1))
-        let take-tagged-children(content, tag) = {
-          if type(tag) != array { tag = (tag,) }
-          let tagged = ()
-          let rest = ()
-          if tag.any(t => is-tagged(content, t)) {
-            tagged.push(untag-content(content))
-          } else if content.func() == [].func() {
-            for child in content.children {
-              if tag.any(t => is-tagged(child, t)) {
-                tagged.push(untag-content(child))
-              } else {
-                rest.push(child)
-              }
-            }
-          } else {
-            rest.push(content)
-          }
-          (tagged: tagged, rest: for r in rest { r })
-        }
-        let untag-children(content, tag) = take-tagged-children(content, tag).tagged
+      // Tag HTML spécial injecté depuis le Markdown.
+      // Usage recommandé: <!-- typst:pagebreak -->
+      typstpagebreak: (attrs, body) => pagebreak(),
 
-        let rows = (header: (), body: (), footer: ())
-        for (tag, _, child) in untag-children(body, ("<tr>", "<thead>", "<tfoot>")) {
-          if tag == "<thead>" {
-            for (_, _, row) in untag-children(child, "<tr>") {
-              rows.header.push(untag-children(row, "<td>"))
-            }
-          } else if tag == "<tfoot>" {
-            for (_, _, row) in untag-children(child, "<tr>") {
-              rows.footer.push(untag-children(row, "<td>"))
-            }
-          } else if tag == "<tr>" {
-            rows.body.push(untag-children(child, "<td>"))
-          }
-        }
-
-        // Compute max column count.
-        let cols_n = calc.max(
-          ..rows.header.map(r => r.len()),
-          ..rows.body.map(r => r.len()),
-          ..rows.footer.map(r => r.len()),
-        )
-        let cols = range(0, cols_n).map(_ => 1fr)
-
-        // Expand cells into table.cell with rowspan/colspan.
-        let start-i = 0
-        for (k, section) in rows {
-          rows.insert(k, section.enumerate().map(((i, row)) => {
-            row.map(((_, attrs, td)) => {
-              let rowspan = int(attrs.at("rowspan", default: "1"))
-              let colspan = int(attrs.at("colspan", default: "1"))
-              table.cell(rowspan: rowspan, colspan: colspan, y: start-i + i, td)
-            })
-          }))
-          start-i += section.len()
-        }
-
-        let args = ()
-        if rows.header.len() != 0 {
-          args.push(table.header(..rows.header.flatten()))
-        }
-        args += rows.body.flatten()
-        if rows.footer.len() != 0 {
-          args.push(table.footer(..rows.footer.flatten()))
-        }
-
-        block(width: 100%)[
-          #table(
-            columns: cols,
-            stroke: (paint: COULEUR_LIGNE_TABLE),
-            ..args,
-          )
-        ]
+      // Forme générale: exécute une expression Typst fournie via l'attribut `e`.
+      // ATTENTION: à utiliser seulement si le Markdown est de confiance.
+      typstexpr: (attrs, body) => {
+        let expr = attrs.at("e", default: "")
+        if str(expr).trim() == "" { none } else { eval(str(expr)) }
       },
     ),
     scope: (
@@ -246,5 +220,9 @@
       },
     ),
   )
-  corps
+  {
+    // Thème de tableau: s'applique aux tables générées par cmarker.
+    set table(stroke: (paint: COULEUR_LIGNE_TABLE))
+    corps
+  }
 }

@@ -208,6 +208,17 @@ API recommandée:
 - Pour une seule plateforme, utilisez un tuple à 1 élément: `plateformes: ("Teams",)`.
 - Compatibilité: vous pouvez encore utiliser `plateforme_teams`, `plateforme_timdoc`, `plateforme_github`, `plateforme_autre` si `plateformes` n’est pas fourni.
 
+### Saut de page depuis le Markdown
+
+Pour forcer un saut de page (commencer le contenu suivant sur la page suivante)
+directement dans un plan en Markdown, insérez une directive à l’endroit voulu.
+
+- Recommandé (commentaire): `<!-- typst:pagebreak -->`
+- Variante (expression Typst, Markdown de confiance): `<!-- typst: pagebreak() -->`
+- Alternative (tag HTML): `<typst-pagebreak/>`
+
+Cette directive est convertie en `pagebreak()` lors du rendu Markdown → Typst.
+
 ### Créer un nouveau document enseignant
 
 1. Créez un fichier `.typ` (ex: `mon-doc.typ`)
