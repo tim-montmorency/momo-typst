@@ -87,7 +87,7 @@
     session: 6,
 
     // --- Page 2: PRÉSENTATION DU COURS ---
-    description_du_cours: "Ce cours vise la réalisation d’un projet multimédia en équipe tel  qu’une installation interactive ou une expérience de réalité mixte.\nL’élève collabore à l’élaboration d’un projet multimédia interactif,  et ce, de la conception jusqu’à la présentation du produit.\nIl a  l’occasion de mettre en pratique toutes les compétences acquises  au cours de sa formation technique.",
+    description_du_cours: "Ce cours vise la réalisation d’un projet multimédia en équipe tel qu’une installation interactive ou une expérience de réalité mixte. L’élève collabore à l’élaboration d’un projet multimédia interactif, et ce, de la conception jusqu’à la présentation du produit. Il a l’occasion de mettre en pratique toutes les compétences acquises au cours de sa formation technique.",
     objectif_integrateur: "Réaliser une expérience multimédia interactive.",
     competences_ministerielles: (
       "015U Réaliser un produit multimédia sur support (éléments 1 à 11).",
