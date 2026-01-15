@@ -13,14 +13,14 @@
   // NOTE: les IDs doivent être stables et simples (ASCII), les noms peuvent contenir des accents.
   "guillaume-arseneault": (
     nom: "Guillaume Arseneault",
-    courriel: "guillaume.arseneault@cmontmorency.qc.ca",
+    courriel: "Guillaume.Arseneault@cmontmorency.qc.ca",
     bureau_id: "c-1651",
     // Optionnel: département de la personne (override du département par défaut).
     // departement: "Techniques d’intégration multimédia",
   ),
   "thomas-o-fredericks": (
     nom: "Thomas O. Fredericks",
-    courriel: "thomas.ofredericks@cmontmorency.qc.ca",
+    courriel: "ThomasOuellet.Fredericks@cmontmorency.qc.ca",
     bureau_id: "c-1651",
   ),
   // Deux profs partagent le même bureau (ne doit s’afficher qu’une seule fois).
